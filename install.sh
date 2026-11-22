@@ -195,14 +195,6 @@ install_hyprland() {
       return 1
     fi
 
-    run_with_progress "Installing Fonts." sudo dnf install -y jetbrains-mono-fonts
-
-    run_with_progress "Installing WayBar." sudo dnf install -y waybar
-
-    run_with_progress "Installing Mako." sudo dnf install -y mako
-
-    run_with_progress "Installing Fuzzel." sudo dnf install -y fuzzel
-
     run_with_progress "Installing dnf COPR support." sudo dnf install -y dnf5-plugins
 
     local copr found=false

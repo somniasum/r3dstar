@@ -1,0 +1,4 @@
+# extra packages installed with ./install.sh --gaming
+gamemode
+mangohud
+gamescope

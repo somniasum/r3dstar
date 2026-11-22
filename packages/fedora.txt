@@ -1,0 +1,18 @@
+# dnf packages for the Hyprland setup (one per line, # = comment)
+waybar
+fuzzel
+mako
+libnotify
+cliphist
+grim
+slurp
+wl-clipboard
+swaybg
+playerctl
+wireplumber
+jq
+tmux
+fastfetch
+xorg-x11-server-Xwayland
+xdg-desktop-portal-gtk
+jetbrains-mono-fonts
