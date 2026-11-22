@@ -1,0 +1,15 @@
+#!/bin/sh
+# scratch <name> [command...]: toggle a drop-down scratchpad, starting it if needed.
+# The window gets the class com.dedsec.<name>; hyprland.lua sends that class to
+# the special workspace of the same name, floating and centered.
+name=${1:?usage: scratch <name> [command...]}
+shift
+class="com.dedsec.$name"
+
+if hyprctl clients -j | jq -e --arg c "$class" 'any(.[]; .class == $c)' >/dev/null; then
+  hyprctl dispatch "hl.dsp.workspace.toggle_special(\"$name\")" >/dev/null
+elif [ $# -gt 0 ]; then
+  setsid -f ghostty --class="$class" -e "$@" >/dev/null 2>&1
+else
+  setsid -f ghostty --class="$class" >/dev/null 2>&1
+fi

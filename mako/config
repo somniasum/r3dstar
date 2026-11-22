@@ -1,0 +1,26 @@
+# mako: tiny notification daemon, DedSec style
+font=JetBrains Mono 12
+background-color=#000000
+text-color=#f2f2f2
+border-color=#ff2a2a
+border-size=2
+border-radius=0
+padding=12
+margin=12
+width=360
+anchor=top-right
+layer=overlay
+max-visible=4
+default-timeout=5000
+icons=0
+
+[urgency=low]
+border-color=#4a4a4a
+
+[urgency=high]
+border-color=#ff0a78
+default-timeout=0
+
+# makoctl mode -a dnd (used by game mode) hides everything
+[mode=dnd]
+invisible=1

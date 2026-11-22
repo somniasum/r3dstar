@@ -1,0 +1,41 @@
+# ghostty: DedSec black / red, matches the Hyprland setup
+font-family = JetBrains Mono
+font-size = 12
+
+background = 000000
+foreground = e6e6e6
+cursor-color = ff2a2a
+cursor-text = 000000
+cursor-style = block
+cursor-style-blink = false
+selection-background = 3a0a0a
+selection-foreground = ffffff
+
+palette = 0=#1a1a1a
+palette = 1=#ff2a2a
+palette = 2=#5fa85f
+palette = 3=#d4a017
+palette = 4=#4a7fd1
+palette = 5=#b04ac8
+palette = 6=#3fb8b0
+palette = 7=#d0d0d0
+palette = 8=#5a5a5a
+palette = 9=#ff5a5a
+palette = 10=#7fd07f
+palette = 11=#f0c040
+palette = 12=#6f9fe8
+palette = 13=#cf7be0
+palette = 14=#63d4cc
+palette = 15=#ffffff
+
+window-padding-x = 8
+window-padding-y = 6
+window-save-state = never
+gtk-titlebar = false
+gtk-single-instance = true
+confirm-close-surface = false
+resize-overlay = never
+mouse-hide-while-typing = true
+
+# long outputs (objdump, strings, gdb sessions): about 10 MB of scrollback
+scrollback-limit = 10000000

@@ -1,0 +1,4 @@
+#!/bin/bash
+# Run any command from $PATH (dmenu_run style), using fuzzel
+cmd=$(compgen -c | sort -u | fuzzel --dmenu --prompt='run: ') || exit 0
+[ -n "$cmd" ] && setsid -f sh -c "$cmd" >/dev/null 2>&1

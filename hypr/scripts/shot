@@ -1,0 +1,40 @@
+#!/bin/sh
+# shot [area|full|window|ocr]: screenshot to ~/Pictures/Screenshots and the clipboard.
+# ocr: select a region and the recognised text goes to the clipboard instead.
+dir="${XDG_PICTURES_DIR:-$HOME/Pictures}/Screenshots"
+mkdir -p "$dir"
+file="$dir/shot-$(date +%Y%m%d-%H%M%S).png"
+
+notify() {
+    command -v notify-send >/dev/null && notify-send -t 1500 "$1" "${2:-}"
+}
+
+case "${1:-area}" in
+area)
+    geo=$(slurp) || exit 0
+    grim -g "$geo" "$file"
+    ;;
+full)
+    grim "$file"
+    ;;
+window)
+    geo=$(hyprctl activewindow -j | jq -r 'select(.size) | "\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1])"')
+    [ -n "$geo" ] || exit 0
+    grim -g "$geo" "$file"
+    ;;
+ocr)
+    command -v tesseract >/dev/null || { notify "OCR unavailable" "install tesseract"; exit 1; }
+    geo=$(slurp) || exit 0
+    text=$(grim -g "$geo" - | tesseract stdin stdout 2>/dev/null)
+    printf '%s' "$text" | wl-copy
+    notify "OCR copied" "$(printf '%s' "$text" | head -c 60)"
+    exit 0
+    ;;
+*)
+    echo "usage: shot [area|full|window|ocr]" >&2
+    exit 2
+    ;;
+esac
+
+wl-copy <"$file"
+notify "Screenshot saved" "$file"

@@ -1,0 +1,9 @@
+#!/bin/sh
+# powermenu: logout, suspend, reboot or shutdown from a launcher list
+choice=$(printf 'logout\nsuspend\nreboot\nshutdown\n' | fuzzel --dmenu --lines 4 --width 20 --prompt 'power> ') || exit 0
+case "$choice" in
+logout) hyprctl dispatch 'hl.dsp.exit()' ;;
+suspend) systemctl suspend ;;
+reboot) systemctl reboot ;;
+shutdown) systemctl poweroff ;;
+esac

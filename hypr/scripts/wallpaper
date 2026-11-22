@@ -1,0 +1,10 @@
+#!/bin/sh
+# Solid black unless ~/.config/wallpaper.png exists. Use an image at your exact
+# screen resolution to keep memory use low.
+pkill -x swaybg
+img="${XDG_CONFIG_HOME:-$HOME/.config}/wallpaper.png"
+if [ -f "$img" ]; then
+    exec swaybg -i "$img" -m fill
+else
+    exec swaybg -c '#000000'
+fi
