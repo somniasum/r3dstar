@@ -12,6 +12,8 @@
     "tray"
   ],
   "modules-right": [
+    "cpu",
+    "memory",
     "disk",
     "pulseaudio"
   ],
@@ -67,8 +69,8 @@
     "tooltip": false
   },
   "clock": {
-    "interval": 30,
-    "format": "<span color='#ff2a2a'>[</span> {:%a %d %b  %H:%M} <span color='#ff2a2a'>]</span>",
+    "interval": 1,
+    "format": "<span color='#ff2a2a'>[</span> {:%a %d %b  %H:%M:%S} <span color='#ff2a2a'>]</span>",
     "tooltip": false
   },
   "pulseaudio": {
