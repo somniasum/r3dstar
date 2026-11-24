@@ -1,0 +1,87 @@
+{
+  "layer": "top",
+  "position": "top",
+  "height": 34,
+  "spacing": 0,
+  "reload_style_on_change": false,
+  "modules-left": [
+    "hyprland/workspaces"
+  ],
+  "modules-center": [
+    "clock",
+    "tray"
+  ],
+  "modules-right": [
+    "cpu",
+    "memory",
+    "disk",
+    "pulseaudio"
+  ],
+  "hyprland/workspaces": {
+    "format": "{id}",
+    "persistent-workspaces": {
+      "*": 5
+    },
+    "disable-scroll": true
+  },
+  "hyprland/window": {
+    "format": "{class}",
+    "max-length": 24,
+    "separate-outputs": true
+  },
+  "cpu": {
+    "interval": 3,
+    "format": "<span color='#ff2a2a'>[</span> <span color='#8a8a8a'>CPU</span> {usage}% <span color='#ff2a2a'>]</span>",
+    "states": {
+      "warning": 70,
+      "critical": 90
+    }
+  },
+  "memory": {
+    "interval": 3,
+    "format": "<span color='#ff2a2a'>[</span> <span color='#8a8a8a'>RAM</span> {percentage}% <span color='#ff2a2a'>]</span>",
+    "states": {
+      "warning": 75,
+      "critical": 90
+    }
+  },
+  "temperature": {
+    "interval": 3,
+    "hwmon-path-abs": "/sys/devices/platform/coretemp.0/hwmon",
+    "input-filename": "temp1_input",
+    "critical-threshold": 85,
+    "format": "<span color='#ff2a2a'>[</span> <span color='#8a8a8a'>TMP</span> {temperatureC}°C <span color='#ff2a2a'>]</span>"
+  },
+  "disk": {
+    "interval": 60,
+    "path": "/",
+    "format": "<span color='#ff2a2a'>[</span> <span color='#8a8a8a'>DSK</span> {percentage_used}% <span color='#ff2a2a'>]</span>",
+    "states": {
+      "warning": 85,
+      "critical": 95
+    }
+  },
+  "network#vpn": {
+    "interface": "tun0",
+    "interval": 5,
+    "format": "<span color='#ff2a2a'>[</span> <span color='#8a8a8a'>VPN</span> {ipaddr} <span color='#ff2a2a'>]</span>",
+    "format-disconnected": "<span color='#ff2a2a'>[</span> <span color='#8a8a8a'>VPN</span> <span color='#5a5a5a'>--</span> <span color='#ff2a2a'>]</span>",
+    "tooltip": false
+  },
+  "clock": {
+    "interval": 1,
+    "format": "<span color='#ff2a2a'>[</span> {:%a %d %b  %H:%M:%S} <span color='#ff2a2a'>]</span>",
+    "tooltip": false
+  },
+  "pulseaudio": {
+    "format": "<span color='#ff2a2a'>[</span> <span color='#8a8a8a'>VOL</span> {volume}% <span color='#ff2a2a'>]</span>",
+    "format-muted": "<span color='#8a8a8a'>VOL</span> <span color='#5a5a5a'>mute</span>",
+    "on-click": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
+    "scroll-step": 5,
+    "tooltip": false
+  },
+  "tray": {
+    "icon-size": 18,
+    "spacing": 8
+  }
+}

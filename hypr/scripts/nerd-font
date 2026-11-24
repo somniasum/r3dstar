@@ -1,0 +1,31 @@
+#!/bin/sh
+# nerd-font: install the Nerd Fonts "Symbols Only" font, which the bar icons need.
+# Per user (no root): it goes to ~/.local/share/fonts. Safe to run again.
+set -eu
+dest="${XDG_DATA_HOME:-$HOME/.local/share}/fonts/NerdFontsSymbolsOnly"
+url="https://github.com/ryanoasis/nerd-fonts/releases/latest/download/NerdFontsSymbolsOnly.tar.xz"
+
+have() { fc-list ':family=Symbols Nerd Font Mono' 2>/dev/null | grep -q .; }
+
+if have; then
+    echo "Symbols Nerd Font Mono is already installed."
+    exit 0
+fi
+
+tmp=$(mktemp -d)
+trap 'rm -rf "$tmp"' EXIT
+
+echo "Downloading the Symbols Nerd Font from the official Nerd Fonts release..."
+curl -fsSL --retry 3 --max-time 120 -o "$tmp/symbols.tar.xz" "$url"
+tar -xJf "$tmp/symbols.tar.xz" -C "$tmp" SymbolsNerdFontMono-Regular.ttf SymbolsNerdFont-Regular.ttf
+
+mkdir -p "$dest"
+cp "$tmp"/SymbolsNerdFont*.ttf "$dest/"
+fc-cache -f "$dest"
+
+if have; then
+    echo "Installed to $dest"
+else
+    echo "Installed the files, but fontconfig does not list the font yet. Try logging out and in." >&2
+    exit 1
+fi

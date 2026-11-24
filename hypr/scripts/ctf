@@ -1,0 +1,52 @@
+#!/bin/bash
+# ctf [name] [target-ip]: a working folder for a box or challenge.
+#   ctf                   list your boxes (* = current)
+#   ctf <name> [ip]       create ~/ctf/<name>, make it current, open a terminal in it
+# In that terminal CTF, CTF_DIR, TARGET and LHOST are set and <name>/bin is on PATH.
+# Super+n opens the notes of the current box.
+# shellcheck disable=SC1091,SC2016  # sourcing env.sh and passing $1 to the inner shell are intentional
+root="$HOME/ctf"
+here="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+
+if [ $# -eq 0 ]; then
+    [ -d "$root" ] || { echo "no boxes yet. usage: ctf <name> [target-ip]"; exit 0; }
+    cur=$(basename "$(readlink -f "$root/current" 2>/dev/null)")
+    for d in "$root"/*/; do
+        n=$(basename "$d")
+        [ "$n" = "current" ] && continue
+        if [ "$n" = "$cur" ]; then echo "* $n"; else echo "  $n"; fi
+    done
+    exit 0
+fi
+
+name=$1
+target=${2:-}
+case "$name" in
+"" | *[!A-Za-z0-9._-]*) echo "name: letters, digits, . _ - only" >&2; exit 2 ;;
+esac
+dir="$root/$name"
+mkdir -p "$dir"/{notes,exploit,loot,bin}
+
+# keep the old target when you re-open a box without giving the IP again
+if [ -z "$target" ] && [ -f "$dir/env.sh" ]; then
+    target=$(. "$dir/env.sh" >/dev/null 2>&1; printf '%s' "${TARGET:-}")
+fi
+
+if [ ! -f "$dir/notes/README.md" ]; then
+    printf '# %s\n\ntarget: %s\n\n## recon\n\n## foothold\n\n## privesc\n' \
+        "$name" "${target:-?}" >"$dir/notes/README.md"
+fi
+
+lhost=$("$here/lhost" -p 2>/dev/null)
+{
+    printf 'export CTF=%q\n' "$name"
+    printf 'export CTF_DIR=%q\n' "$dir"
+    [ -n "$target" ] && printf 'export TARGET=%q\n' "$target"
+    [ -n "$lhost" ] && printf 'export LHOST=%q\n' "$lhost"
+    printf 'export PATH=%q:$PATH\n' "$dir/bin"
+} >"$dir/env.sh"
+
+ln -sfn "$dir" "$root/current"
+echo "current box: $name${target:+ ($target)}"
+
+exec ghostty --working-directory="$dir/exploit" -e sh -c '. "$1"; exec "${SHELL:-/bin/bash}"' sh "$dir/env.sh"

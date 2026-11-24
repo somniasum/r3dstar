@@ -1,0 +1,5 @@
+#!/bin/sh
+# notes: open the notes for your current CTF box, or ~/notes.md when there is none
+f="$HOME/ctf/current/notes/README.md"
+[ -f "$f" ] || f="$HOME/notes.md"
+exec "${EDITOR:-vim}" "$f"

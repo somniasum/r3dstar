@@ -15,10 +15,26 @@
     "cpu",
     "memory",
     "disk",
+    "network",
+    "network#vpn",
     "pulseaudio"
   ],
+  // Workspace labels read like memory addresses. Other styles to try, swap the
+  // format-icons block: binary "001".."101", or icons: 󰆍 term, 󰖟 web, 󰃤 debug, 󰘚 re, 󰚌 burp.
   "hyprland/workspaces": {
-    "format": "{id}",
+    "format": "{icon}",
+    "format-icons": {
+      "1": "0x01",
+      "2": "0x02",
+      "3": "0x03",
+      "4": "0x04",
+      "5": "0x05",
+      "6": "0x06",
+      "7": "0x07",
+      "8": "0x08",
+      "9": "0x09",
+      "default": "0x??"
+    },
     "persistent-workspaces": {
       "*": 5
     },
@@ -29,43 +45,72 @@
     "max-length": 24,
     "separate-outputs": true
   },
+  // 󰻠 CPU: click for btop
   "cpu": {
-    "interval": 3,
-    "format": "<span color='#ff2a2a'>[</span> <span color='#8a8a8a'>CPU</span> {usage}% <span color='#ff2a2a'>]</span>",
+    "interval": 5,
+    "format": "<span color='#ff2a2a'>[</span> <span color='#ff2a2a'>󰻠</span> {usage}% <span color='#ff2a2a'>]</span>",
     "states": {
       "warning": 70,
       "critical": 90
-    }
+    },
+    "on-click": "$HOME/.config/hypr/scripts/scratch btop btop"
   },
+  // 󰍛 RAM: click for btop
   "memory": {
-    "interval": 3,
-    "format": "<span color='#ff2a2a'>[</span> <span color='#8a8a8a'>RAM</span> {percentage}% <span color='#ff2a2a'>]</span>",
+    "interval": 5,
+    "format": "<span color='#ff2a2a'>[</span> <span color='#ff2a2a'>󰍛</span> {percentage}% <span color='#ff2a2a'>]</span>",
+    "tooltip-format": "{used:0.1f}G used of {total:0.1f}G",
     "states": {
       "warning": 75,
       "critical": 90
-    }
+    },
+    "on-click": "$HOME/.config/hypr/scripts/scratch btop btop"
   },
+  // 󰔏 CPU temperature (not in the bar by default, add "temperature" to a modules list)
   "temperature": {
-    "interval": 3,
+    "interval": 5,
     "hwmon-path-abs": "/sys/devices/platform/coretemp.0/hwmon",
     "input-filename": "temp1_input",
     "critical-threshold": 85,
-    "format": "<span color='#ff2a2a'>[</span> <span color='#8a8a8a'>TMP</span> {temperatureC}°C <span color='#ff2a2a'>]</span>"
+    "format": "<span color='#ff2a2a'>[</span> <span color='#ff2a2a'>󰔏</span> {temperatureC}°C <span color='#ff2a2a'>]</span>"
   },
+  // 󰋊 Disk usage of /, hover for used / total
   "disk": {
     "interval": 60,
     "path": "/",
-    "format": "<span color='#ff2a2a'>[</span> <span color='#8a8a8a'>DSK</span> {percentage_used}% <span color='#ff2a2a'>]</span>",
+    "format": "<span color='#ff2a2a'>[</span> <span color='#ff2a2a'>󰋊</span> {percentage_used}% <span color='#ff2a2a'>]</span>",
+    "tooltip-format": "{used} used of {total} on {path}",
     "states": {
       "warning": 85,
       "critical": 95
     }
   },
+  // 󰤨 Network: the wifi icon shows the signal strength (󰤟 󰤢 󰤥 󰤨). Hover for the SSID,
+  // the IP and the speeds. 󰈀 is ethernet, 󰤮 is offline.
+  "network": {
+    "interval": 5,
+    "format": "<span color='#ff2a2a'>[</span> <span color='#ff2a2a'>󰈀</span> <span color='#ff2a2a'>]</span>",
+    "format-wifi": "<span color='#ff2a2a'>[</span> <span color='#ff2a2a'>{icon}</span> <span color='#ff2a2a'>]</span>",
+    "format-ethernet": "<span color='#ff2a2a'>[</span> <span color='#ff2a2a'>󰈀</span> <span color='#ff2a2a'>]</span>",
+    "format-disconnected": "<span color='#ff2a2a'>[</span> <span color='#5a5a5a'>󰤮</span> <span color='#ff2a2a'>]</span>",
+    "format-icons": [
+      "󰤟",
+      "󰤢",
+      "󰤥",
+      "󰤨"
+    ],
+    "tooltip": true,
+    "tooltip-format-wifi": "{essid}  ({signalStrength}%)\n{ipaddr}/{cidr}\n↓ {bandwidthDownBytes}  ↑ {bandwidthUpBytes}",
+    "tooltip-format-ethernet": "{ifname}\n{ipaddr}/{cidr}\n↓ {bandwidthDownBytes}  ↑ {bandwidthUpBytes}",
+    "tooltip-format-disconnected": "not connected"
+  },
+  // 󰖂 VPN: only appears while tun0 is up. Click to copy the IP (LHOST).
   "network#vpn": {
     "interface": "tun0",
     "interval": 5,
-    "format": "<span color='#ff2a2a'>[</span> <span color='#8a8a8a'>VPN</span> {ipaddr} <span color='#ff2a2a'>]</span>",
-    "format-disconnected": "<span color='#ff2a2a'>[</span> <span color='#8a8a8a'>VPN</span> <span color='#5a5a5a'>--</span> <span color='#ff2a2a'>]</span>",
+    "format": "<span color='#ff2a2a'>[</span> <span color='#ff2a2a'>󰖂</span> {ipaddr} <span color='#ff2a2a'>]</span>",
+    "format-disconnected": "",
+    "on-click": "$HOME/.config/hypr/scripts/lhost",
     "tooltip": false
   },
   "clock": {
@@ -73,9 +118,17 @@
     "format": "<span color='#ff2a2a'>[</span> {:%a %d %b  %H:%M:%S} <span color='#ff2a2a'>]</span>",
     "tooltip": false
   },
+  // 󰕾 Volume: the icon follows the level, 󰝟 when muted. Click to mute, scroll to change.
   "pulseaudio": {
-    "format": "<span color='#ff2a2a'>[</span> <span color='#8a8a8a'>VOL</span> {volume}% <span color='#ff2a2a'>]</span>",
-    "format-muted": "<span color='#8a8a8a'>VOL</span> <span color='#5a5a5a'>mute</span>",
+    "format": "<span color='#ff2a2a'>[</span> <span color='#ff2a2a'>{icon}</span> {volume}% <span color='#ff2a2a'>]</span>",
+    "format-muted": "<span color='#ff2a2a'>[</span> <span color='#5a5a5a'>󰝟 mute</span> <span color='#ff2a2a'>]</span>",
+    "format-icons": {
+      "default": [
+        "󰕿",
+        "󰖀",
+        "󰕾"
+      ]
+    },
     "on-click": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
     "scroll-step": 5,
     "tooltip": false

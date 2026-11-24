@@ -1,0 +1,102 @@
+#!/bin/bash
+# doctor: check that everything this setup needs is in place, and say how to fix what is not.
+# Exit code is 1 when something required is missing.
+
+if [ -t 1 ]; then
+    G=$'\033[0;32m' Y=$'\033[1;33m' R=$'\033[0;31m' C=$'\033[0;36m' N=$'\033[0m'
+else
+    G="" Y="" R="" C="" N=""
+fi
+fails=0
+warns=0
+ok() { printf '%s[ + ]%s %s\n' "$G" "$N" "$*"; }
+warn() { printf '%s[ * ]%s %s\n' "$Y" "$N" "$*"; warns=$((warns + 1)); }
+bad() { printf '%s[ ! ]%s %s\n' "$R" "$N" "$*"; fails=$((fails + 1)); }
+head_() { printf '\n%s[ # ] %s%s\n' "$C" "$*" "$N"; }
+
+# command name -> dnf package, when they differ
+pkg_for() {
+    case "$1" in
+    wl-copy | wl-paste) echo wl-clipboard ;;
+    notify-send) echo libnotify ;;
+    wpctl) echo wireplumber ;;
+    gamemoderun) echo gamemode ;;
+    vainfo) echo libva-utils ;;
+    powerprofilesctl) echo power-profiles-daemon ;;
+    hyprctl) echo hyprland ;;
+    *) echo "$1" ;;
+    esac
+}
+
+# how to get a missing command
+fix_for() {
+    case "$1" in
+    ghostty) echo "not in the Fedora repos, install it from ghostty.org" ;;
+    brave-origin) echo "add Brave's repo first, see brave.com/linux" ;;
+    hyprctl) echo "comes with Hyprland, see the COPR note in the README" ;;
+    *) echo "sudo dnf install $(pkg_for "$1")" ;;
+    esac
+}
+
+need() { if command -v "$1" >/dev/null 2>&1; then ok "$1"; else bad "$1 missing: $(fix_for "$1")"; fi; }
+want() { # want <command> <what it is for>
+    if command -v "$1" >/dev/null 2>&1; then ok "$1"; else warn "$1 not found ($2): $(fix_for "$1")"; fi
+}
+
+head_ "Hyprland"
+if command -v hyprctl >/dev/null 2>&1 && ver=$(hyprctl version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n1) && [ -n "$ver" ]; then
+    if [ "$(printf '%s\n0.55.0\n' "$ver" | sort -V | head -n1)" = "0.55.0" ]; then
+        ok "running, version $ver (Lua config needs 0.55+)"
+    else
+        bad "Hyprland $ver is too old for hyprland.lua (needs 0.55+)"
+    fi
+    errs=$(hyprctl configerrors 2>/dev/null | tr -d '[:space:]')
+    if [ -z "$errs" ]; then ok "no config errors"; else bad "config errors, run: hyprctl configerrors"; fi
+elif command -v Hyprland >/dev/null 2>&1; then
+    warn "Hyprland is installed but not running (run doctor again from inside the session)"
+else
+    bad "Hyprland not found"
+fi
+
+head_ "Required tools"
+for c in hyprctl waybar fuzzel mako grim slurp wl-copy wl-paste swaybg jq playerctl wpctl notify-send; do need "$c"; done
+
+head_ "Optional tools"
+want ghostty "terminal and scratchpads"
+want brave-origin "browser on Super+w"
+want cliphist "clipboard history on Super+v"
+want btop "scratchpad when you click CPU or RAM in the bar"
+want swaylock "lock screen"
+want swayidle "lock after 15 minutes idle"
+want tesseract "OCR screenshots on Super+Shift+o"
+want gamemoderun "games"
+want mangohud "games, FPS overlay"
+want gamescope "games"
+want vainfo "hardware video decode check"
+
+head_ "Fonts and icons"
+if fc-list 2>/dev/null | grep -qi "JetBrains Mono"; then ok "JetBrains Mono"; else warn "JetBrains Mono not found: sudo dnf install jetbrains-mono-fonts"; fi
+if fc-list ':charset=f02ca' family 2>/dev/null | grep -qi 'nerd font'; then
+    ok "Nerd Font icons available"
+else
+    bad "no font has the Nerd Font icons (the bar shows empty boxes): run nerd-font"
+fi
+
+head_ "Desktop"
+if pgrep -x waybar >/dev/null; then ok "waybar running"; else warn "waybar not running"; fi
+if pgrep -x mako >/dev/null; then ok "mako running"; else warn "mako not running"; fi
+if [ -f "${XDG_CONFIG_HOME:-$HOME/.config}/wallpaper.png" ]; then ok "wallpaper.png in place"; else warn "no ~/.config/wallpaper.png (solid black is used)"; fi
+if pgrep -x swayidle >/dev/null; then ok "idle lock active"; else warn "idle lock not running (normal while in game mode)"; fi
+
+if command -v vainfo >/dev/null 2>&1; then
+    head_ "Video acceleration"
+    line=$(vainfo 2>&1 | grep -m1 'Driver version')
+    if [ -n "$line" ]; then ok "${line#*: }"; else warn "vainfo found no driver (install intel-media-driver or mesa-va-drivers-freeworld)"; fi
+fi
+
+printf '\n'
+if [ "$fails" -gt 0 ]; then
+    printf '%s[ ! ]%s %d problem(s), %d warning(s)\n' "$R" "$N" "$fails" "$warns"
+    exit 1
+fi
+printf '%s[ + ]%s all good, %d warning(s)\n' "$G" "$N" "$warns"

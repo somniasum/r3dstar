@@ -1,0 +1,14 @@
+#!/bin/sh
+# lhost [-p]: copy your VPN (tun0) IP to the clipboard, falling back to the
+# primary IP. -p only prints it. Handy for reverse shells and payloads.
+ip=$(ip -4 -o addr show tun0 2>/dev/null | awk '{split($4, a, "/"); print a[1]; exit}')
+if [ -z "$ip" ]; then
+    ip=$(ip -4 route get 1.1.1.1 2>/dev/null | awk '{for (i = 1; i <= NF; i++) if ($i == "src") {print $(i + 1); exit}}')
+fi
+[ -n "$ip" ] || { echo "no IP found" >&2; exit 1; }
+
+if [ "${1:-}" != "-p" ]; then
+    printf '%s' "$ip" | wl-copy
+    command -v notify-send >/dev/null && notify-send -t 1500 "LHOST copied" "$ip"
+fi
+printf '%s\n' "$ip"

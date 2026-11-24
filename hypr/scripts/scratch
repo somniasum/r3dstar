@@ -7,9 +7,9 @@ shift
 class="com.dedsec.$name"
 
 if hyprctl clients -j | jq -e --arg c "$class" 'any(.[]; .class == $c)' >/dev/null; then
-  hyprctl dispatch "hl.dsp.workspace.toggle_special(\"$name\")" >/dev/null
+    hyprctl dispatch "hl.dsp.workspace.toggle_special(\"$name\")" >/dev/null
 elif [ $# -gt 0 ]; then
-  setsid -f ghostty --class="$class" -e "$@" >/dev/null 2>&1
+    setsid -f ghostty --class="$class" -e "$@" >/dev/null 2>&1
 else
-  setsid -f ghostty --class="$class" >/dev/null 2>&1
+    setsid -f ghostty --class="$class" >/dev/null 2>&1
 fi

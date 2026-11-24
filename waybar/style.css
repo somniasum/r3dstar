@@ -1,5 +1,5 @@
 * {
-  font-family: "JetBrains Mono", monospace;
+  font-family: "JetBrains Mono", "Symbols Nerd Font Mono", monospace;
   font-size: 15px;
   font-weight: 600;
   border: none;
@@ -15,9 +15,10 @@ window#waybar {
   border-bottom: 2px solid #ff2a2a;
 }
 
-/* workspaces: white = has windows, dim = empty, red block = current */
+/* workspaces (0x01 style): white = has windows, dim = empty, red block = current */
 #workspaces button {
-  padding: 0 11px;
+  padding: 0 9px;
+  letter-spacing: 1px;
   color: #f2f2f2;
   background: transparent;
 }
@@ -42,7 +43,6 @@ window#waybar {
 }
 
 /* centered status: red brackets and grey labels come from the config, values are white */
-#custom-dedsec,
 #cpu,
 #memory,
 #temperature,
@@ -54,11 +54,6 @@ window#waybar {
   background: transparent;
 }
 
-#custom-dedsec {
-  font-weight: 800;
-}
-
-#custom-dedsec:hover,
 #network.vpn:hover {
   background: #2a0a0a;
 }
@@ -75,6 +70,10 @@ window#waybar {
 #disk.critical,
 #temperature.critical {
   color: #ff2a2a;
+}
+
+#network.disconnected {
+  color: #5a5a5a;
 }
 
 #clock {
@@ -102,4 +101,16 @@ window#waybar {
 
 #tray > .needs-attention {
   background: #ff2a2a;
+}
+
+/* tooltips (SSID, memory, disk) */
+tooltip {
+  background: #000000;
+  border: 2px solid #ff2a2a;
+  border-radius: 0;
+}
+
+tooltip label {
+  color: #f2f2f2;
+  font-weight: 600;
 }

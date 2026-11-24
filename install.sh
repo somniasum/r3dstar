@@ -4,7 +4,7 @@
 # description: DedSec Hyprland desktop for Fedora (coding, binary exploitation, gaming)
 # version: 0.1
 #
-# usage: ./install.sh [--no-packages] [--no-copr] [--gaming] [--dev] [--all] [-h]
+# usage: ./install.sh [--no-packages] [--no-copr] [--no-fonts] [--gaming] [--dev] [--all] [-h]
 
 set -u
 
@@ -21,6 +21,7 @@ readonly COPRS=("ashbuk/Hyprland-Fedora" "lionheartp/Hyprland")
 
 OPT_PACKAGES=true
 OPT_COPR=true
+OPT_FONTS=true
 OPT_GAMING=false
 OPT_DEV=false
 SUDO_PID=""
@@ -100,6 +101,7 @@ Usage: ./install.sh [options]
 
   --no-packages   skip dnf (only copy the config files)
   --no-copr       never enable a COPR (Hyprland must already be installed)
+  --no-fonts      do not download the Nerd Font symbols (the bar icons need them)
   --gaming        also install gamemode, mangohud and gamescope
   --dev           also install coding and reverse-engineering tools (gdb, radare2, nasm, ...)
   --all           --gaming and --dev together
@@ -112,6 +114,7 @@ parse_args() {
     case "$1" in
     --no-packages) OPT_PACKAGES=false ;;
     --no-copr) OPT_COPR=false ;;
+    --no-fonts) OPT_FONTS=false ;;
     --gaming) OPT_GAMING=true ;;
     --dev) OPT_DEV=true ;;
     --all)
@@ -278,6 +281,32 @@ deploy_configs() {
   log SUCCESS "Config files installed to $CONFIG_DIR"
 }
 
+# ctf, lhost and doctor become normal commands (~/.local/bin is on PATH on Fedora)
+link_bins() {
+  local bin="$HOME/.local/bin" name target dst
+  mkdir -p "$bin"
+  for name in ctf lhost doctor; do
+    target="$CONFIG_DIR/hypr/scripts/$name"
+    dst="$bin/$name"
+    [[ "$name" == "doctor" ]] && dst="$bin/dedsec-doctor"
+    if [[ -e "$dst" && ! -L "$dst" ]]; then
+      log WARN "$dst already exists and is not a link, leaving it alone."
+      continue
+    fi
+    ln -sfn "$target" "$dst"
+  done
+  log SUCCESS "Commands linked in $bin: ctf, lhost, dedsec-doctor"
+}
+
+# Nerd Font symbols for the bar icons (per user, no root, safe to repeat)
+install_font() {
+  if "$CONFIG_DIR/hypr/scripts/nerd-font" >>"$LOG_FILE" 2>&1; then
+    log SUCCESS "Nerd Font symbols ready (bar icons)."
+  else
+    log WARN "Could not install the Nerd Font symbols. Run nerd-font later (see $LOG_FILE)."
+  fi
+}
+
 # Summary report
 show_summary() {
   echo
@@ -291,11 +320,11 @@ show_summary() {
   log NOTICE "Next steps:"
   echo " • Log out and choose ${COLORS[BOLD]}Hyprland${COLORS[NC]} on the login screen"
   echo " • Or from a TTY run: start-hyprland"
-  echo " • Wallpaper: cp your image to ~/.config/wallpaper.png (solid black until then)"
+  echo " • Press Super+/ for the keybind cheat sheet"
+  echo " • Check everything with: dedsec-doctor"
   echo " • Errors after login? run: hyprctl configerrors"
   echo " • Terminal is ghostty (not in the Fedora repos, install it separately)"
-  echo " • Keys: see README.md (Super+Return terminal, Super+\` scratch terminal, Super+F10 game mode)"
-  echo " • New CTF target: ~/.config/hypr/scripts/ctf <name> <ip>  (add the scripts folder to PATH)"
+  echo " • New CTF box: ctf <name> <ip>"
   echo " • Clipboard history stores text you copy. Wipe it with Super+Shift+v after copying secrets"
   echo
   log INFO "Log file saved: $LOG_FILE"
@@ -321,6 +350,12 @@ main() {
   fi
 
   deploy_configs
+  link_bins
+  if [[ "$OPT_FONTS" == true ]]; then
+    install_font
+  else
+    log NOTICE "Skipping the Nerd Font download."
+  fi
   show_summary
 }
 

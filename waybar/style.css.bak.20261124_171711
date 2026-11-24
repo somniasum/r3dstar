@@ -1,0 +1,105 @@
+* {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  border-radius: 0;
+  min-height: 0;
+  box-shadow: none;
+  text-shadow: none;
+}
+
+window#waybar {
+  background: #000000;
+  color: #f2f2f2;
+  border-bottom: 2px solid #ff2a2a;
+}
+
+/* workspaces: white = has windows, dim = empty, red block = current */
+#workspaces button {
+  padding: 0 11px;
+  color: #f2f2f2;
+  background: transparent;
+}
+
+#workspaces button.empty {
+  color: #4a4a4a;
+}
+
+#workspaces button.active {
+  background: #ff2a2a;
+  color: #000000;
+}
+
+#workspaces button.urgent {
+  background: #f2f2f2;
+  color: #ff2a2a;
+}
+
+#workspaces button:hover {
+  background: #2a0a0a;
+  color: #ff2a2a;
+}
+
+/* centered status: red brackets and grey labels come from the config, values are white */
+#custom-dedsec,
+#cpu,
+#memory,
+#temperature,
+#disk,
+#network,
+#clock {
+  padding: 0 7px;
+  color: #f2f2f2;
+  background: transparent;
+}
+
+#custom-dedsec {
+  font-weight: 800;
+}
+
+#custom-dedsec:hover,
+#network.vpn:hover {
+  background: #2a0a0a;
+}
+
+/* warm up as things get busy */
+#cpu.warning,
+#memory.warning,
+#disk.warning {
+  color: #ffb000;
+}
+
+#cpu.critical,
+#memory.critical,
+#disk.critical,
+#temperature.critical {
+  color: #ff2a2a;
+}
+
+#clock {
+  font-weight: 800;
+}
+
+/* right side */
+#window {
+  padding: 0 14px;
+  color: #8a8a8a;
+}
+
+#pulseaudio {
+  padding: 0 10px;
+  color: #f2f2f2;
+}
+
+#pulseaudio.muted {
+  color: #5a5a5a;
+}
+
+#tray {
+  padding: 0 10px;
+}
+
+#tray > .needs-attention {
+  background: #ff2a2a;
+}

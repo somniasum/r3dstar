@@ -4,6 +4,9 @@ fuzzel
 mako
 libnotify
 cliphist
+btop
+swaylock
+swayidle
 grim
 slurp
 wl-clipboard
@@ -11,8 +14,7 @@ swaybg
 playerctl
 wireplumber
 jq
-tmux
-fastfetch
 xorg-x11-server-Xwayland
 xdg-desktop-portal-gtk
 jetbrains-mono-fonts
+fastfetch

@@ -1,0 +1,17 @@
+#!/bin/sh
+# lock: lock the screen with your wallpaper behind a red ring
+if ! command -v swaylock >/dev/null; then
+    command -v notify-send >/dev/null && notify-send -u critical "lock" "swaylock is not installed"
+    exit 1
+fi
+pgrep -x swaylock >/dev/null && exit 0
+
+img="${XDG_CONFIG_HOME:-$HOME/.config}/wallpaper.png"
+[ -f "$img" ] && set -- -i "$img" -s fill
+
+exec swaylock -f -c 000000 "$@" \
+    --inside-color 000000cc --ring-color ff2a2a --key-hl-color ff0a78 --bs-hl-color ff2a2a \
+    --line-color 00000000 --separator-color 00000000 --text-color f2f2f2 \
+    --inside-ver-color 000000cc --ring-ver-color f2f2f2 \
+    --inside-wrong-color 000000cc --ring-wrong-color ff2a2a \
+    --indicator-radius 90 --indicator-thickness 6

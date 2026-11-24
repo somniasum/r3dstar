@@ -1,4 +1,4 @@
--- hyprland.lua: DedSec setup for coding, binary exploitation and gaming.
+-- hyprland.lua: DedSec setup for coding, binary exploitation and gaming, tuned for low overhead.
 -- Needs Hyprland 0.55+ (Lua config). Check errors with: hyprctl configerrors
 
 ----------------
@@ -9,7 +9,8 @@ local RED = "rgba(ff2a2aff)"
 local MAGENTA = "rgba(ff0a78ff)" -- second stop of the border glow
 local INACTIVE = "rgba(1c1c1cff)"
 
--- Short, snappy animations. false = none at all (Super+F10 also switches them off).
+-- Animations cost GPU time on every window open, close and workspace switch, so the lean
+-- default is none. true = short snappy ones (Super+F10 game mode switches them off either way).
 local ANIMATIONS = true
 
 ------------------
@@ -37,6 +38,7 @@ hl.on("hyprland.start", function()
 	hl.exec_cmd(scripts .. "/wallpaper")
 	hl.exec_cmd("waybar")
 	hl.exec_cmd("mako")
+	hl.exec_cmd(scripts .. "/idle") -- lock after 15 min idle (needs swayidle + swaylock)
 	-- clipboard history (text only), skipped if cliphist is not installed
 	hl.exec_cmd("command -v cliphist >/dev/null && wl-paste --type text --watch cliphist store")
 end)
@@ -48,6 +50,7 @@ hl.env("XCURSOR_SIZE", "24")
 hl.env("HYPRCURSOR_SIZE", "24")
 hl.env("LIBVA_DRIVER_NAME", "iHD") -- Intel iHD: hardware video decode in mpv/browsers
 hl.env("mesa_glthread", "true") -- threaded OpenGL in Mesa, helps older OpenGL games
+hl.env("MESA_SHADER_CACHE_MAX_SIZE", "4G") -- default is 1G; a bigger cache means fewer shader-compile stutters across many games
 hl.env("MOZ_ENABLE_WAYLAND", "1")
 hl.env("ELECTRON_OZONE_PLATFORM_HINT", "auto")
 hl.env("QT_QPA_PLATFORM", "wayland;xcb")
@@ -112,6 +115,11 @@ hl.config({
 		-- Switches to triple buffering when the GPU can't keep up. Helps weak
 		-- iGPUs a lot, costs nothing when the GPU is coping. Experimental.
 		new_render_scheduling = true,
+
+		-- Turns off the colour-management pipeline (HDR / ICC profiles), which is extra GPU
+		-- work per frame on an SDR screen. Needs a log out and in to fully apply. Remove this
+		-- line if you want HDR.
+		cm_enabled = false,
 	},
 
 	misc = {
@@ -163,37 +171,48 @@ hl.config({
 ---------------------
 ---- KEYBINDINGS ----
 ---------------------
+-- Every bind has a description. Super+/ shows them all (the list comes from Hyprland itself).
 local mod = "SUPER"
 
-local function run(keys, cmd, opts)
-	hl.bind(mod .. " + " .. keys, hl.dsp.exec_cmd(cmd), opts)
+local function bind(keys, dsp, desc, opts)
+	opts = opts or {}
+	if desc and desc ~= "" then
+		opts.description = desc
+	end
+	hl.bind(keys, dsp, opts)
+end
+
+local function run(keys, cmd, desc, opts)
+	bind(mod .. " + " .. keys, hl.dsp.exec_cmd(cmd), desc, opts)
 end
 
 -- Apps
-run("Return", terminal)
-run("w", browser)
-run("d", launcher)
-run("SHIFT + d", scripts .. "/runner")
-run("Escape", scripts .. "/powermenu")
+run("Return", terminal, "Terminal")
+run("w", browser, "Browser")
+run("d", launcher, "App launcher")
+run("SHIFT + d", scripts .. "/runner", "Run any command")
+run("Escape", scripts .. "/powermenu", "Power menu (lock, logout, reboot...)")
+run("slash", scripts .. "/keys", "Keybind cheat sheet")
+run("CTRL + l", scripts .. "/lock", "Lock screen")
 
 -- Scratchpads: drop-down windows that appear over whatever you are doing.
 -- Press again to hide. The window is started on first use.
-run("grave", scripts .. "/scratch scratch") -- terminal
-run("n", scripts .. "/scratch notes ${EDITOR:-vim} ~/notes.md") -- notes
-run("c", scripts .. "/scratch calc python3 -i " .. scripts .. "/calc.py") -- hex/endian REPL
+run("grave", scripts .. "/scratch scratch", "Scratchpad terminal")
+run("n", scripts .. "/scratch notes " .. scripts .. "/notes", "Scratchpad notes (current CTF box or ~/notes.md)")
+run("c", scripts .. "/scratch calc python3 -i " .. scripts .. "/calc.py", "Scratchpad hex/endian REPL")
 
 -- Clipboard history and LHOST (your VPN IP, for reverse shells)
-run("v", scripts .. "/clip")
-run("SHIFT + v", scripts .. "/clip wipe")
-run("SHIFT + i", scripts .. "/lhost")
+run("v", scripts .. "/clip", "Clipboard history")
+run("SHIFT + v", scripts .. "/clip wipe", "Wipe clipboard history")
+run("SHIFT + i", scripts .. "/lhost", "Copy my VPN IP (LHOST)")
 
 -- Screenshots
-hl.bind("Print", hl.dsp.exec_cmd(scripts .. "/shot area"))
-hl.bind("SHIFT + Print", hl.dsp.exec_cmd(scripts .. "/shot full"))
-run("Print", scripts .. "/shot window")
-run("s", scripts .. "/shot area")
-run("SHIFT + s", scripts .. "/shot full")
-run("SHIFT + o", scripts .. "/shot ocr") -- select text on screen, it lands in the clipboard
+bind("Print", hl.dsp.exec_cmd(scripts .. "/shot area"), "Screenshot: area")
+bind("SHIFT + Print", hl.dsp.exec_cmd(scripts .. "/shot full"), "Screenshot: full screen")
+run("Print", scripts .. "/shot window", "Screenshot: window")
+run("s", scripts .. "/shot area", "Screenshot: area")
+run("SHIFT + s", scripts .. "/shot full", "Screenshot: full screen")
+run("SHIFT + o", scripts .. "/shot ocr", "OCR: copy text from the screen")
 
 -- Volume and media (Super+F1..F7, plus the dedicated keys)
 local vol_up = "wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"
@@ -201,63 +220,67 @@ local vol_down = "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"
 local mute = "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
 local mic = "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"
 
-run("F1", mute)
-run("F2", vol_down, { repeating = true })
-run("F3", vol_up, { repeating = true })
-run("F4", mic)
-run("F5", "playerctl previous")
-run("F6", "playerctl play-pause")
-run("F7", "playerctl next")
+run("F1", mute, "Mute")
+run("F2", vol_down, "Volume down", { repeating = true })
+run("F3", vol_up, "Volume up", { repeating = true })
+run("F4", mic, "Mute microphone")
+run("F5", "playerctl previous", "Previous track")
+run("F6", "playerctl play-pause", "Play / pause")
+run("F7", "playerctl next", "Next track")
 
-hl.bind("XF86AudioMute", hl.dsp.exec_cmd(mute), { locked = true })
-hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd(vol_down), { locked = true, repeating = true })
-hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd(vol_up), { locked = true, repeating = true })
-hl.bind("XF86AudioMicMute", hl.dsp.exec_cmd(mic), { locked = true })
-hl.bind("XF86AudioPrev", hl.dsp.exec_cmd("playerctl previous"), { locked = true })
-hl.bind("XF86AudioPlay", hl.dsp.exec_cmd("playerctl play-pause"), { locked = true })
-hl.bind("XF86AudioPause", hl.dsp.exec_cmd("playerctl play-pause"), { locked = true })
-hl.bind("XF86AudioNext", hl.dsp.exec_cmd("playerctl next"), { locked = true })
+bind("XF86AudioMute", hl.dsp.exec_cmd(mute), "Mute", { locked = true })
+bind("XF86AudioLowerVolume", hl.dsp.exec_cmd(vol_down), "Volume down", { locked = true, repeating = true })
+bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd(vol_up), "Volume up", { locked = true, repeating = true })
+bind("XF86AudioMicMute", hl.dsp.exec_cmd(mic), "Mute microphone", { locked = true })
+bind("XF86AudioPrev", hl.dsp.exec_cmd("playerctl previous"), "Previous track", { locked = true })
+bind("XF86AudioPlay", hl.dsp.exec_cmd("playerctl play-pause"), "Play / pause", { locked = true })
+bind("XF86AudioPause", hl.dsp.exec_cmd("playerctl play-pause"), "Play / pause", { locked = true })
+bind("XF86AudioNext", hl.dsp.exec_cmd("playerctl next"), "Next track", { locked = true })
 
 -- Windows
-hl.bind(mod .. " + q", hl.dsp.window.close())
-hl.bind(mod .. " + SHIFT + q", hl.dsp.exit())
-hl.bind(mod .. " + j", hl.dsp.layout("cyclenext"))
-hl.bind(mod .. " + k", hl.dsp.layout("cycleprev"))
-hl.bind(mod .. " + SHIFT + j", hl.dsp.layout("swapnext"))
-hl.bind(mod .. " + SHIFT + k", hl.dsp.layout("swapprev"))
-hl.bind(mod .. " + h", hl.dsp.layout("mfact -0.05"))
-hl.bind(mod .. " + l", hl.dsp.layout("mfact +0.05"))
-hl.bind(mod .. " + i", hl.dsp.layout("addmaster"))
-hl.bind(mod .. " + o", hl.dsp.layout("removemaster"))
-hl.bind(mod .. " + space", hl.dsp.layout("swapwithmaster master"))
-hl.bind(mod .. " + SHIFT + space", hl.dsp.window.float({ action = "toggle" }))
-hl.bind(mod .. " + p", hl.dsp.window.pin({ action = "toggle" })) -- keep a floating window on every workspace
-hl.bind(mod .. " + m", hl.dsp.window.fullscreen({ mode = "maximized" }))
-hl.bind(mod .. " + f", hl.dsp.window.fullscreen({ mode = "fullscreen" }))
+bind(mod .. " + q", hl.dsp.window.close(), "Close window")
+bind(mod .. " + SHIFT + q", hl.dsp.exit(), "Quit Hyprland")
+bind(mod .. " + j", hl.dsp.layout("cyclenext"), "Focus next window")
+bind(mod .. " + k", hl.dsp.layout("cycleprev"), "Focus previous window")
+bind(mod .. " + SHIFT + j", hl.dsp.layout("swapnext"), "Move window down the stack")
+bind(mod .. " + SHIFT + k", hl.dsp.layout("swapprev"), "Move window up the stack")
+bind(mod .. " + h", hl.dsp.layout("mfact -0.05"), "Shrink master area")
+bind(mod .. " + l", hl.dsp.layout("mfact +0.05"), "Grow master area")
+bind(mod .. " + i", hl.dsp.layout("addmaster"), "More windows in master")
+bind(mod .. " + o", hl.dsp.layout("removemaster"), "Fewer windows in master")
+bind(mod .. " + space", hl.dsp.layout("swapwithmaster master"), "Promote window to master")
+bind(mod .. " + SHIFT + space", hl.dsp.window.float({ action = "toggle" }), "Toggle floating")
+bind(mod .. " + p", hl.dsp.window.pin({ action = "toggle" }), "Pin floating window to all workspaces")
+bind(mod .. " + m", hl.dsp.window.fullscreen({ mode = "maximized" }), "Monocle (maximize, keeps the bar)")
+bind(mod .. " + f", hl.dsp.window.fullscreen({ mode = "fullscreen" }), "Real fullscreen")
 
 -- Bar and config
-run("b", "pkill -SIGUSR1 waybar") -- hide / show the bar
-run("SHIFT + r", "hyprctl reload")
+run("b", "pkill -SIGUSR1 waybar", "Hide / show the bar")
+run("SHIFT + r", "hyprctl reload", "Reload the config")
 
--- Game mode (Super+F10): animations off, bar stopped, notifications silenced,
+-- Game mode (Super+F10): animations off, bar stopped, notifications silenced, idle lock paused,
 -- performance power profile. Press again to bring everything back.
 local game_mode = false
-hl.bind(mod .. " + F10", function()
+bind(mod .. " + F10", function()
 	game_mode = not game_mode
 	hl.config({ animations = { enabled = (not game_mode) and ANIMATIONS } })
 	hl.exec_cmd(scripts .. (game_mode and "/game on" or "/game off"))
-end)
+end, "Game mode on / off")
 
--- Workspaces 1-9 (dwm tags)
+-- Workspaces 1-9 (dwm tags). Only the first of each row is listed in the cheat sheet.
 for i = 1, 9 do
-	hl.bind(mod .. " + " .. i, hl.dsp.focus({ workspace = i }))
-	hl.bind(mod .. " + SHIFT + " .. i, hl.dsp.window.move({ workspace = i }))
+	bind(mod .. " + " .. i, hl.dsp.focus({ workspace = i }), i == 1 and "Go to workspace 1-9 (Super+1..9)" or "")
+	bind(
+		mod .. " + SHIFT + " .. i,
+		hl.dsp.window.move({ workspace = i }),
+		i == 1 and "Move window to workspace 1-9 (Super+Shift+1..9)" or ""
+	)
 end
-hl.bind(mod .. " + Tab", hl.dsp.focus({ workspace = "previous" }))
+bind(mod .. " + Tab", hl.dsp.focus({ workspace = "previous" }), "Previous workspace")
 
 -- Mouse: Super + left drag = move, Super + right drag = resize
-hl.bind(mod .. " + mouse:272", hl.dsp.window.drag(), { mouse = true })
-hl.bind(mod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
+bind(mod .. " + mouse:272", hl.dsp.window.drag(), "Move window (drag)", { mouse = true })
+bind(mod .. " + mouse:273", hl.dsp.window.resize(), "Resize window (drag)", { mouse = true })
 
 ------------------------------
 ---- WORKSPACES AND GAPS ----
@@ -302,6 +325,7 @@ end
 scratch_rule("scratch", 0.8, 0.6)
 scratch_rule("notes", 0.6, 0.7)
 scratch_rule("calc", 0.5, 0.5)
+scratch_rule("btop", 0.85, 0.8) -- opened by clicking CPU or RAM in the bar
 
 -- RE workspace layout: Ghidra on 4, Burp on 5. Check class names with: hyprctl clients
 hl.window_rule({ name = "ghidra", match = { class = "(?i)^ghidra" }, workspace = "4" })
@@ -323,6 +347,13 @@ hl.window_rule({
 	name = "steam-small-windows",
 	match = { class = "^steam$", title = "^(Friends List|Steam Settings)$" },
 	float = true,
+})
+
+-- A fullscreen window (game, video) keeps the screen awake: no idle lock while it is up
+hl.window_rule({
+	name = "idle-inhibit-fullscreen",
+	match = { class = ".*" },
+	idle_inhibit = "fullscreen",
 })
 
 -- Launcher, bar and notifications appear instantly
