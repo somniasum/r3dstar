@@ -73,11 +73,11 @@ run_with_progress() {
 
 # Banner
 show_banner() {
-  echo -e "${COLORS[PURPLE]}"
+  echo -e "${COLORS[RED]}"
   cat <<'EOF'
 ╔════════════════════════════════════════╗
 ║                r3dstar                 ║
-║                 v.0.1                  ║
+║                 v.0.4                  ║
 ╚════════════════════════════════════════╝
 EOF
   echo -e "${COLORS[NC]}"
